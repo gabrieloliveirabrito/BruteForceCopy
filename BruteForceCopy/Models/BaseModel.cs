@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace BruteForceCopy.Models
 {
-    public abstract class BaseModel : INotifyPropertyChanged
+    public abstract class BaseModel : Freezable, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 

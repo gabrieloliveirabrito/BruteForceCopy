@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using BruteForceCopy.Enums;
 using Microsoft.Win32;
 
@@ -11,6 +13,13 @@ namespace BruteForceCopy.Models
     public partial class MainModel : BaseModel
     {
         RegistryKey registry;
+
+        public static readonly DependencyProperty MainWindowProperty = DependencyProperty.Register(nameof(MainWindow), typeof(MainWindow), typeof(MainModel));
+        public MainWindow MainWindow
+        {
+            get => (MainWindow)GetValue(MainWindowProperty);
+            set => SetValue(MainWindowProperty, value);
+        }
 
         public MainModel()
         {
@@ -40,6 +49,16 @@ namespace BruteForceCopy.Models
             var ignoreSmallFiles = registry.GetValue("IgnoreSmallFiles");
             if (ignoreSmallFiles != null)
                 _IgnoreSmallFiles = Convert.ToInt16(ignoreSmallFiles) == 1;
+        }
+
+        protected override void Set<T>(ref T field, T value, [CallerMemberName] string propertyName = "")
+        {
+            if (field == null && value != null || field != null && !field.Equals(value))
+            {
+                field = value;
+
+                    NotifyChanged(propertyName);
+            }
         }
 
         private CopyingState _State;
@@ -181,6 +200,11 @@ namespace BruteForceCopy.Models
                 Set(ref _IgnoreSmallFiles, value);
                 registry.SetValue("IgnoreSmallFiles", value ? 1 : 0);
             }
+        }
+
+        protected override Freezable CreateInstanceCore()
+        {
+            return new MainModel();
         }
     }
 }

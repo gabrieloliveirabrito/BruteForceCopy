@@ -68,6 +68,7 @@
     <Compile Include="Converters\ProgressToString.cs" />
     <Compile Include="Enums\CopyingState.cs" />
     <Compile Include="Models\BaseModel.cs" />
+    <Compile Include="Models\BindableProperty.cs" />
     <Compile Include="Models\MainModel.cs" />
     <Compile Include="Models\MainModel.methods.cs" />
     <Compile Include="RelayCommand.cs" />

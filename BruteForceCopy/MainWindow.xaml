@@ -15,7 +15,7 @@
         </MultiBinding>
     </Window.Title>
     <Window.DataContext>
-        <models:MainModel />
+        <models:MainModel MainWindow="{Binding Path=., ElementName=Window}" />
     </Window.DataContext>
     <Grid>
         <Grid.RowDefinitions>
@@ -32,32 +32,75 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <Label Grid.Row="0" Grid.Column="0">From</Label>
-        <TextBox Grid.Row="0" Grid.Column="1" IsReadOnly="true" Text="{Binding FromFolder}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
-        <Button Grid.Row="0" Grid.Column="2" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" Command="{Binding SelectFromFolderCommand}" CommandParameter="{x:Reference Window}">Select folder</Button>
+        <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" IsReadOnly="true" Text="{Binding FromFolder}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
+        <Button Grid.Row="0" Grid.Column="3" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" Command="{Binding SelectFromFolderCommand}" CommandParameter="{x:Reference Window}">Select folder</Button>
 
         <Label Grid.Row="1" Grid.Column="0">To</Label>
-        <TextBox Grid.Row="1" Grid.Column="1" IsReadOnly="true" Text="{Binding ToFolder}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
-        <Button Grid.Row="1" Grid.Column="2" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" Command="{Binding SelectToFolderCommand}" CommandParameter="{x:Reference Window}">Select folder</Button>
+        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" IsReadOnly="true" Text="{Binding ToFolder}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
+        <Button Grid.Row="1" Grid.Column="3" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" Command="{Binding SelectToFolderCommand}" CommandParameter="{x:Reference Window}">Select folder</Button>
 
         <Label Grid.Row="2" Grid.Column="0">Total progress</Label>
-        <ProgressBar Grid.Row="2" Grid.Column="1" Maximum="100" Value="{Binding TotalProgress, Mode=OneWay}" />
-        <Label Grid.Row="2" Grid.Column="2"  Content="{Binding TotalProgress}" ContentStringFormat="{}{0}%" />
+        <ProgressBar Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Maximum="100" Value="{Binding TotalProgress, Mode=OneWay}" />
+        <Grid Grid.Row="2" Grid.Column="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Column="0" Content="{Binding TotalProgress}" ContentStringFormat="{}{0}%" />
+            <Label Grid.Column="1">
+                <Label.Content>
+                    <TextBlock>
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0}/{1}">
+                                <Binding Path="CurrentIndex" />
+                                <Binding Path="Total" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </Label.Content>
+            </Label>
+        </Grid>
 
         <Label Grid.Row="3" Grid.Column="0">File Progress</Label>
-        <ProgressBar Grid.Row="3" Grid.Column="1" Maximum="100" Value="{Binding BufferProgress,Mode=OneWay}" />
-        <Label Grid.Row="3" Grid.Column="2" Content="{Binding BufferProgress}" ContentStringFormat="{}{0}%" />
+        <ProgressBar Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Maximum="100" Value="{Binding BufferProgress,Mode=OneWay}" />
+
+        <Grid Grid.Row="3" Grid.Column="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            
+            <Label Grid.Column="0" Content="{Binding BufferProgress}" ContentStringFormat="{}{0}%" />
+            <Label Grid.Column="1">
+                <Label.Content>
+                    <TextBlock>
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0}/{1}">
+                                <Binding Path="BufferPosition" />
+                                <Binding Path="BufferLength" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </Label.Content>
+            </Label>
+        </Grid>
+        
         
         <Label Grid.Row="4" Grid.Column="0">Ignored dirs</Label>
-        <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" ToolTip="Separate the directories by comma" Text="{Binding IgnoreDirs}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
+        <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" ToolTip="Separate the directories by comma" Text="{Binding IgnoreDirs}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
         
         <CheckBox Grid.Row="5" Grid.Column="0" Content="Ignore dot dirs/files" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IgnoreDotDirs}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
         <CheckBox Grid.Row="5" Grid.Column="1" Content="Ignore dot dirs/files" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IgnoreDotFiles}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
         <CheckBox Grid.Row="5" Grid.Column="2" Content="Ignore dot dirs/files" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IgnoreSmallFiles}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
 
-        <Button Grid.Row="6" Grid.ColumnSpan="3"  IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" Command="{Binding StartCopyCommand}">Copiar</Button>
-        <TextBox Grid.Row="7" Grid.ColumnSpan="3" Text="{Binding Log}" VerticalContentAlignment="Top" IsReadOnly="True" TextChanged="TextBox_TextChanged"/>
+        <Button Grid.Row="6" Grid.ColumnSpan="2"  IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" Command="{Binding StartCopyCommand}">Copy files</Button>
+        <Button Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2"  IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" Command="{Binding TryReadBufferCommand}">Try read buffer</Button>
+        
+        <TextBox Grid.Row="7" Grid.ColumnSpan="4" Text="{Binding Log}" VerticalContentAlignment="Top" IsReadOnly="True" VerticalScrollBarVisibility="Visible" TextChanged="TextBox_TextChanged"/>
     </Grid>
 </Window>
