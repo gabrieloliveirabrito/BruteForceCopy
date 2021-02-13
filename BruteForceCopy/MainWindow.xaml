@@ -97,6 +97,7 @@
         <CheckBox Grid.Row="5" Grid.Column="0" Content="Ignore dot dirs/files" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IgnoreDotDirs}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
         <CheckBox Grid.Row="5" Grid.Column="1" Content="Ignore dot dirs/files" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IgnoreDotFiles}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
         <CheckBox Grid.Row="5" Grid.Column="2" Content="Ignore dot dirs/files" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding IgnoreSmallFiles}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
+        <CheckBox Grid.Row="5" Grid.Column="3" Content="Stop on error (per file)" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="{Binding StopOnError}" IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" />
 
         <Button Grid.Row="6" Grid.ColumnSpan="2"  IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" Command="{Binding StartCopyCommand}">Copy files</Button>
         <Button Grid.Row="6" Grid.Column="2" Grid.ColumnSpan="2"  IsEnabled="{Binding IsCopying, Converter={StaticResource BooleanInverter}}" Command="{Binding TryReadBufferCommand}">Try read buffer</Button>

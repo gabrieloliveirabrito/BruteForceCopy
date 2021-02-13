@@ -22,7 +22,7 @@ namespace BruteForceCopy.Models
             SelectFromFolderCommand = new RelayCommand<MainWindow>(SelectFromFolder);
             SelectToFolderCommand = new RelayCommand<MainWindow>(SelectToFolder);
             StartCopyCommand = new RelayCommand<MainWindow>((mw) => Task.Run(() => StartCopy(mw)));
-            TryReadBufferCommand = new RelayCommand<MainWindow>((mw) => Task.Run(() => TryReadBuffer(mw)));
+            TryReadBufferCommand = new RelayCommand<MainWindow>((mw) => new Task(new Action(() => TryReadBuffer(mw)), TaskCreationOptions.LongRunning).Start());
         }
 
         private void SelectFromFolder(MainWindow obj)
@@ -59,9 +59,31 @@ namespace BruteForceCopy.Models
             }
         }
 
+        string log_suffix = "";
+        void StartLog()
+        {
+            var now = DateTime.Now;
+            log_suffix = $"{now.Day}_{now.Month}_{now.Year}x{now.Hour}_{now.Minute}";
+        }
+
         void AppendLog(string msg)
         {
-            Log += msg + Environment.NewLine;
+            msg += Environment.NewLine;
+            if (_Log == null)
+                Log = msg;
+            else
+            {
+                var msgs = _Log.Split(Environment.NewLine.ToCharArray());
+                if (msgs.Length > 300)
+                {
+                    using (var log = File.AppendText(Path.Combine(Environment.CurrentDirectory, $"log_{log_suffix}.txt")))
+                        log.WriteLine(_Log);
+
+                    Log = msg;
+                }
+                else
+                    Log += msg;
+            }
         }
 
         private async Task StartCopy(MainWindow arg)
@@ -209,6 +231,7 @@ namespace BruteForceCopy.Models
         {
             try
             {
+                StartLog();
                 using (var dialog = new TaskDialog())
                 {
                     dialog.MainIcon = TaskDialogIcon.Warning;
@@ -247,7 +270,7 @@ namespace BruteForceCopy.Models
                     if (!Directory.Exists(recoveredPath))
                         Directory.CreateDirectory(recoveredPath);
 
-                    var chunk = new byte[256];
+                    var chunk = new byte[128];
 
                     State = CopyingState.Copying;
                     Total = storageFiles.Count;
@@ -271,55 +294,71 @@ namespace BruteForceCopy.Models
                         BufferLength = 0;
                         
                         var withError = false;
-                        var errorChunk = false;
 
-                        using (var input = File.OpenRead(filename))
-                        using (var output = File.Create(outputPath))
+                        using (var input = File.Open(filename, FileMode.Open, FileAccess.Read))
+                        using (var outputFile = File.Create(outputPath))
+                            using(var output = new MemoryStream())
                         {
                             BufferLength = input.Length;
                             AppendLog($"Buffering file {targetFile}...");
 
                             while (true)
                             {
+                                if (BufferPosition > BufferLength) break;
+
                                 int readed = 0;
                                 try
                                 {
-                                    if (errorChunk)
+                                    readed = await input.ReadAsync(chunk, 0, chunk.Length);
+                                    if (readed > 0)
                                     {
-                                        readed = input.ReadByte();
-                                        if (readed != -1)
-                                        {
-                                            errorChunk = false;
-                                            output.WriteByte(Convert.ToByte(readed));
-                                            await output.FlushAsync();
-                                        }
-                                        else break;
+                                        await output.WriteAsync(chunk, 0, readed);
+                                        //await output.FlushAsync();
                                     }
-                                    else
-                                    {
-                                        readed = await input.ReadAsync(chunk, 0, chunk.Length);
-                                        if (readed > 0)
-                                        {
-                                            await output.WriteAsync(chunk, 0, readed);
-                                            await output.FlushAsync();
-                                        }
-                                        else break;
-                                    }
+                                    else break;
                                 }
                                 catch (Exception ex)
                                 {
-                                    errorChunk = true;
-                                    AppendLog(ex.Message + Environment.NewLine + ex.StackTrace);
-                                    AppendLog($"Failed to read a byte {_BufferPosition} of {targetFile}, appending 0x0 and try again after 5 seconds for cooling storage!");
-                                    await Task.Delay(100);
+                                    withError = true;
+                                    readed = chunk.Length;
+                                    chunk = new byte[chunk.Length];
+
+                                    await output.WriteAsync(chunk, 0, readed);
+
+                                    AppendLog(ex.Message);
+                                    if (_StopOnError)
+                                    {
+                                        AppendLog($"Failed to read a byte {_BufferPosition} of {targetFile}, skipping file....");
+                                        var rest = BufferLength - (BufferPosition + readed);
+                                        if(rest > 0)
+                                        {
+                                            var buffer = new byte[rest];
+                                            await output.WriteAsync(buffer, 0, buffer.Length);
+                                        }
+
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        AppendLog($"Failed to read a byte {_BufferPosition} of {targetFile}, appending 0x0 and try again after 1,5 seconds for cooling storage!");
+                                        await Task.Delay(1500);
+                                    }
                                 }
                                 finally
                                 {
-                                    BufferPosition += errorChunk ? 1 : readed;
+                                    BufferPosition += readed;
                                     if (BufferPosition % (1024 * 1024) == 0)
-                                        await Task.Delay(100);
+                                    {
+                                        AppendLog("Reached 1mb mod bytes, cooling...");
+                                        await Task.Delay(250);
+                                    }
                                 }
                             }
+
+                            AppendLog("Copying result from memory to file...");
+                            
+                            output.Position = 0;
+                            await output.CopyToAsync(outputFile);
 
                             AppendLog($"File {targetFile} copied {(withError ? "with errors/corrupted" : "successfully")}!");
                         }
@@ -334,7 +373,11 @@ namespace BruteForceCopy.Models
             }
             catch(Exception ex)
             {
-                AppendLog(ex.Message + Environment.NewLine + ex.StackTrace);
+                AppendLog(ex.Message);
+            }
+            finally
+            {
+                IsCopying = false;
             }
         }
 

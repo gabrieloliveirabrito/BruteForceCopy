@@ -49,6 +49,10 @@ namespace BruteForceCopy.Models
             var ignoreSmallFiles = registry.GetValue("IgnoreSmallFiles");
             if (ignoreSmallFiles != null)
                 _IgnoreSmallFiles = Convert.ToInt16(ignoreSmallFiles) == 1;
+
+            var stopOnError = registry.GetValue("StopOnError");
+            if (stopOnError != null)
+                _StopOnError = Convert.ToInt16(stopOnError) == 1;
         }
 
         protected override void Set<T>(ref T field, T value, [CallerMemberName] string propertyName = "")
@@ -199,6 +203,17 @@ namespace BruteForceCopy.Models
             {
                 Set(ref _IgnoreSmallFiles, value);
                 registry.SetValue("IgnoreSmallFiles", value ? 1 : 0);
+            }
+        }
+
+        private bool _StopOnError;
+        public bool StopOnError
+        {
+            get => _StopOnError;
+            set
+            {
+                Set(ref _StopOnError, value);
+                registry.SetValue("StopOnError", value ? 1 : 0);
             }
         }
 
